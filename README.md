@@ -4,7 +4,7 @@ A full-stack Notice Board application built with **Next.js (Pages Router)**, **P
 
 ## Live Demo
 
-🔗 [https://your-app.vercel.app](https://your-app.vercel.app) ← replace with your Vercel URL after deploying
+🔗 https://noticeboard-gpomf7msb-smttomars-projects.vercel.app/
 
 ---
 
@@ -22,13 +22,13 @@ A full-stack Notice Board application built with **Next.js (Pages Router)**, **P
 
 ## Tech Stack
 
-| Concern | Technology |
-|---|---|
-| Framework | Next.js 14, Pages Router |
-| Database ORM | Prisma |
-| Database | TiDB Cloud (MySQL-compatible, free tier) |
-| Hosting | Vercel (Hobby tier) |
-| Styling | Tailwind CSS |
+| Concern      | Technology                               |
+| ------------ | ---------------------------------------- |
+| Framework    | Next.js 14, Pages Router                 |
+| Database ORM | Prisma                                   |
+| Database     | TiDB Cloud (MySQL-compatible, free tier) |
+| Hosting      | Vercel (Hobby tier)                      |
+| Styling      | Tailwind CSS                             |
 
 ---
 
@@ -50,6 +50,7 @@ npm install
 ### 3. Set up the database
 
 Create a free database on one of:
+
 - **[TiDB Cloud](https://tidbcloud.com)** (recommended — MySQL-compatible, free)
 - **[Neon](https://neon.tech)** (Postgres, free)
 - **[Supabase](https://supabase.com)** (Postgres, free)
@@ -92,13 +93,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## API Routes
 
-| Method | Route | Description |
-|---|---|---|
-| `GET` | `/api/notices` | List all notices (Urgent first, then by date) |
-| `POST` | `/api/notices` | Create a new notice |
-| `GET` | `/api/notices/[id]` | Get a single notice |
-| `PUT` | `/api/notices/[id]` | Update a notice |
-| `DELETE` | `/api/notices/[id]` | Delete a notice |
+| Method   | Route               | Description                                   |
+| -------- | ------------------- | --------------------------------------------- |
+| `GET`    | `/api/notices`      | List all notices (Urgent first, then by date) |
+| `POST`   | `/api/notices`      | Create a new notice                           |
+| `GET`    | `/api/notices/[id]` | Get a single notice                           |
+| `PUT`    | `/api/notices/[id]` | Update a notice                               |
+| `DELETE` | `/api/notices/[id]` | Delete a notice                               |
 
 All mutation routes validate on the server and return `422` with field-level error messages for invalid input.
 
