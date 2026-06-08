@@ -4,7 +4,7 @@ A full-stack Notice Board application built with **Next.js (Pages Router)**, **P
 
 ## Live Demo
 
-🔗 https://noticeboard-gpomf7msb-smttomars-projects.vercel.app/
+🔗 https://noticeboard-puce.vercel.app/
 
 ---
 
