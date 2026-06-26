@@ -95,7 +95,7 @@ export default function Home({
             }`}
         >
             <header
-                className={`sticky top-0 z-20 border-b backdrop-blur-sm ${
+                className={`sticky top-0 z-50 border-b backdrop-blur-sm ${
                     isDark
                         ? "border-slate-800 bg-slate-900/80"
                         : "border-slate-200 bg-white/80"
