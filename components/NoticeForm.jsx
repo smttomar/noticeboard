@@ -1,205 +1,397 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { FaMoon, FaSun } from "react-icons/fa";
 
-export default function NoticeForm({ initialData, noticeId }) {
-  const router = useRouter();
-  const isEditing = !!noticeId;
+export default function NoticeForm({
+    initialData,
+    noticeId,
+    theme = "light",
+    toggleTheme,
+}) {
+    const router = useRouter();
+    const isEditing = Boolean(noticeId);
+    const isDark = theme === "dark";
 
-  const toDateInputValue = (dateStr) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString().split("T")[0];
-  };
+    const toDateInputValue = (dateStr) => {
+        if (!dateStr) return "";
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toISOString().split("T")[0];
+    };
 
-  const [form, setForm] = useState({
-    title: initialData?.title || "",
-    body: initialData?.body || "",
-    category: initialData?.category || "General",
-    priority: initialData?.priority || "Normal",
-    publishDate: toDateInputValue(initialData?.publishDate) || "",
-    imageUrl: initialData?.imageUrl || "",
-  });
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
+    const [form, setForm] = useState({
+        title: initialData?.title || "",
+        body: initialData?.content || initialData?.body || "",
+        category: initialData?.category || "General",
+        priority: initialData?.priority || "Normal",
+        eventDate: toDateInputValue(initialData?.eventDate) || "",
+        imageUrl: initialData?.imageUrl || "",
+    });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
-  };
+    const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setErrors({});
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
 
-    const url = isEditing ? `/api/notices/${noticeId}` : "/api/notices";
-    const method = isEditing ? "PUT" : "POST";
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: undefined }));
+        }
+    };
 
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const validate = () => {
+        const nextErrors = {};
 
-      const data = await res.json();
+        if (!form.title.trim()) {
+            nextErrors.title = "Title is required.";
+        }
 
-      if (res.status === 422) {
-        setErrors(data.errors || {});
-        setSubmitting(false);
-        return;
-      }
+        if (!form.body.trim()) {
+            nextErrors.body = "Body is required.";
+        }
 
-      if (!res.ok) {
-        setErrors({ _global: data.error || "Something went wrong." });
-        setSubmitting(false);
-        return;
-      }
+        if (!form.eventDate) {
+            nextErrors.eventDate = "Event date is required.";
+        }
 
-      router.push("/");
-    } catch {
-      setErrors({ _global: "Network error. Please try again." });
-      setSubmitting(false);
-    }
-  };
+        if (form.eventDate) {
+            const selectedDate = new Date(form.eventDate);
+            const today = new Date();
 
-  const inputClass =
-    "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition";
-  const labelClass = "block text-sm font-semibold text-slate-700 mb-1.5";
-  const errorClass = "mt-1 text-xs text-red-600";
+            // Compare only the date part
+            today.setHours(0, 0, 0, 0);
+            selectedDate.setHours(0, 0, 0, 0);
 
-  return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {errors._global && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-          {errors._global}
-        </div>
-      )}
+            if (selectedDate < today) {
+                nextErrors.eventDate = "Past dates are not allowed.";
+            }
+        }
 
-      {/* Title */}
-      <div>
-        <label htmlFor="title" className={labelClass}>
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="e.g. Mid-semester Exam Schedule"
-          className={`${inputClass} ${errors.title ? "border-red-400" : ""}`}
-        />
-        {errors.title && <p className={errorClass}>{errors.title}</p>}
-      </div>
+        if (
+            form.imageUrl.trim() &&
+            !/^https?:\/\/.+/i.test(form.imageUrl.trim())
+        ) {
+            nextErrors.imageUrl = "Please enter a valid URL.";
+        }
 
-      {/* Body */}
-      <div>
-        <label htmlFor="body" className={labelClass}>
-          Body <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="body"
-          name="body"
-          rows={5}
-          value={form.body}
-          onChange={handleChange}
-          placeholder="Describe the notice in detail..."
-          className={`${inputClass} resize-none ${errors.body ? "border-red-400" : ""}`}
-        />
-        {errors.body && <p className={errorClass}>{errors.body}</p>}
-      </div>
+        return nextErrors;
+    };
 
-      {/* Category + Priority */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="category" className={labelClass}>
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className={inputClass}
-          >
-            <option value="General">General</option>
-            <option value="Exam">Exam</option>
-            <option value="Event">Event</option>
-          </select>
-          {errors.category && <p className={errorClass}>{errors.category}</p>}
-        </div>
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-        <div>
-          <label htmlFor="priority" className={labelClass}>
-            Priority
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={form.priority}
-            onChange={handleChange}
-            className={inputClass}
-          >
-            <option value="Normal">Normal</option>
-            <option value="Urgent">Urgent</option>
-          </select>
-          {errors.priority && <p className={errorClass}>{errors.priority}</p>}
-        </div>
-      </div>
+        const validationErrors = validate();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
 
-      {/* Publish Date */}
-      <div>
-        <label htmlFor="publishDate" className={labelClass}>
-          Publish Date <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="publishDate"
-          name="publishDate"
-          type="date"
-          value={form.publishDate}
-          onChange={handleChange}
-          className={`${inputClass} ${errors.publishDate ? "border-red-400" : ""}`}
-        />
-        {errors.publishDate && <p className={errorClass}>{errors.publishDate}</p>}
-      </div>
+        setSubmitting(true);
+        setErrors({});
 
-      {/* Image URL (bonus) */}
-      <div>
-        <label htmlFor="imageUrl" className={labelClass}>
-          Image URL <span className="text-slate-400 font-normal">(optional)</span>
-        </label>
-        <input
-          id="imageUrl"
-          name="imageUrl"
-          type="url"
-          value={form.imageUrl}
-          onChange={handleChange}
-          placeholder="https://example.com/image.jpg"
-          className={inputClass}
-        />
-      </div>
+        const url = isEditing ? `/api/notices/${noticeId}` : "/api/notices";
+        const method = isEditing ? "PUT" : "POST";
 
-      {/* Buttons */}
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="flex-1 sm:flex-none px-8 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-sm"
+        try {
+            const payload = {
+                ...form,
+                title: form.title.trim(),
+                body: form.body.trim(),
+                imageUrl: form.imageUrl.trim(),
+            };
+
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+
+            if (res.status === 422 && data.errors) {
+                setErrors(data.errors);
+                return;
+            }
+
+            if (!res.ok) {
+                setErrors({
+                    _global:
+                        data.error || "Something went wrong. Please try again.",
+                });
+                return;
+            }
+
+            router.push("/");
+        } catch {
+            setErrors({
+                _global: "Network error. Please try again.",
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const inputClass = isDark
+        ? "w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder:text-slate-500"
+        : "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition placeholder:text-slate-400";
+
+    const labelClass = isDark
+        ? "block text-sm font-semibold text-slate-200 mb-1.5"
+        : "block text-sm font-semibold text-slate-700 mb-1.5";
+
+    const errorClass = "mt-1 text-xs text-red-500";
+    const pageBg = isDark
+        ? "bg-slate-950"
+        : "bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100";
+    const panelBg = isDark
+        ? "bg-slate-900 border-slate-800"
+        : "bg-white border-slate-200";
+    const textMuted = isDark ? "text-slate-400" : "text-slate-500";
+
+    return (
+        <div
+            className={`min-h-screen transition-colors duration-300 ${pageBg}`}
         >
-          {submitting ? "Saving..." : isEditing ? "Save Changes" : "Create Notice"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          disabled={submitting}
-          className="px-6 py-2.5 text-slate-600 font-medium border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
+            <header
+                className={`sticky top-0 z-20 border-b backdrop-blur-sm ${
+                    isDark
+                        ? "border-slate-800 bg-slate-900/80"
+                        : "border-slate-200 bg-white/80"
+                }`}
+            >
+                <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+                    <button
+                        type="button"
+                        onClick={() => router.push("/")}
+                        className={`text-sm font-semibold ${
+                            isDark ? "text-slate-100" : "text-slate-700"
+                        }`}
+                    >
+                        ← Back to Board
+                    </button>
+
+                    {toggleTheme && (
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            aria-label={
+                                isDark
+                                    ? "Switch to light theme"
+                                    : "Switch to dark theme"
+                            }
+                            title={
+                                isDark
+                                    ? "Switch to light theme"
+                                    : "Switch to dark theme"
+                            }
+                            className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                                isDark
+                                    ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
+                                    : "bg-slate-100 text-slate-800 hover:bg-slate-200"
+                            }`}
+                        >
+                            {isDark ? <FaSun /> : <FaMoon />}
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+                <div
+                    className={`rounded-2xl border shadow-sm ${panelBg} p-6 sm:p-8`}
+                >
+                    <div className="mb-6">
+                        <h1
+                            className={`text-2xl font-bold ${
+                                isDark ? "text-slate-50" : "text-slate-900"
+                            }`}
+                        >
+                            {isEditing ? "Edit Notice" : "Create Notice"}
+                        </h1>
+                        <p className={`mt-1 text-sm ${textMuted}`}>
+                            {isEditing
+                                ? "Update the notice details below."
+                                : "Add a new notice to the board."}
+                        </p>
+                    </div>
+
+                    <form
+                        onSubmit={handleSubmit}
+                        noValidate
+                        className="space-y-6"
+                    >
+                        {errors._global && (
+                            <div
+                                className={`rounded-xl border px-4 py-3 text-sm ${
+                                    isDark
+                                        ? "border-red-800 bg-red-950/50 text-red-300"
+                                        : "border-red-200 bg-red-50 text-red-700"
+                                }`}
+                            >
+                                {errors._global}
+                            </div>
+                        )}
+
+                        <div>
+                            <label htmlFor="title" className={labelClass}>
+                                Title <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="title"
+                                name="title"
+                                type="text"
+                                value={form.title}
+                                onChange={handleChange}
+                                placeholder="e.g. Mid-semester Exam Schedule"
+                                className={`${inputClass} ${
+                                    errors.title ? "border-red-400" : ""
+                                }`}
+                            />
+                            {errors.title && (
+                                <p className={errorClass}>{errors.title}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="body" className={labelClass}>
+                                Body <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                id="body"
+                                name="body"
+                                rows={5}
+                                value={form.body}
+                                onChange={handleChange}
+                                placeholder="Describe the notice in detail..."
+                                className={`${inputClass} resize-none ${
+                                    errors.body ? "border-red-400" : ""
+                                }`}
+                            />
+                            {errors.body && (
+                                <p className={errorClass}>{errors.body}</p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label
+                                    htmlFor="category"
+                                    className={labelClass}
+                                >
+                                    Category
+                                </label>
+                                <select
+                                    id="category"
+                                    name="category"
+                                    value={form.category}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                >
+                                    <option value="General">General</option>
+                                    <option value="Exam">Exam</option>
+                                    <option value="Event">Event</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor="priority"
+                                    className={labelClass}
+                                >
+                                    Priority
+                                </label>
+                                <select
+                                    id="priority"
+                                    name="priority"
+                                    value={form.priority}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                >
+                                    <option value="Normal">Normal</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="eventDate" className={labelClass}>
+                                Event Date{" "}
+                                <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="eventDate"
+                                name="eventDate"
+                                type="date"
+                                value={form.eventDate}
+                                onChange={handleChange}
+                                className={`${inputClass} ${
+                                    errors.eventDate ? "border-red-400" : ""
+                                }`}
+                            />
+                            {errors.eventDate && (
+                                <p className={errorClass}>{errors.eventDate}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="imageUrl" className={labelClass}>
+                                Image URL{" "}
+                                <span
+                                    className={`font-normal ${
+                                        isDark
+                                            ? "text-slate-500"
+                                            : "text-slate-400"
+                                    }`}
+                                >
+                                    (optional)
+                                </span>
+                            </label>
+                            <input
+                                id="imageUrl"
+                                name="imageUrl"
+                                type="url"
+                                value={form.imageUrl}
+                                onChange={handleChange}
+                                placeholder="https://example.com/image.jpg"
+                                className={`${inputClass} ${
+                                    errors.imageUrl ? "border-red-400" : ""
+                                }`}
+                            />
+                            {errors.imageUrl && (
+                                <p className={errorClass}>{errors.imageUrl}</p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="flex-1 rounded-xl bg-indigo-600 px-8 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                            >
+                                {submitting
+                                    ? "Saving..."
+                                    : isEditing
+                                      ? "Save Changes"
+                                      : "Create Notice"}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => router.push("/")}
+                                disabled={submitting}
+                                className={`rounded-xl border px-6 py-2.5 font-medium transition-colors disabled:opacity-60 ${
+                                    isDark
+                                        ? "border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800"
+                                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                                }`}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    );
 }

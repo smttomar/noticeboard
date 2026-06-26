@@ -1,44 +1,54 @@
-import Link from "next/link";
 import NoticeForm from "../../../components/NoticeForm";
+import { getRoleFromRequest, isAdminRole } from "../../../lib/auth";
+import { getThemeFromRequest } from "../../../lib/theme";
+import { useNoticeTheme } from "../../../lib/useNoticeTheme";
 
-export async function getServerSideProps({ params }) {
-  const { default: prisma } = await import("../../../lib/prisma");
-  const id = parseInt(params.id, 10);
+export async function getServerSideProps({ req, params }) {
+    const role = getRoleFromRequest(req);
 
-  if (isNaN(id)) {
-    return { notFound: true };
-  }
+    if (!isAdminRole(role)) {
+        return {
+            redirect: {
+                destination: "/login",
+                permanent: false,
+            },
+        };
+    }
 
-  const notice = await prisma.notice.findUnique({ where: { id } });
+    const { default: prisma } = await import("../../../lib/prisma");
+    const noticeId = Number(params.id);
 
-  if (!notice) {
-    return { notFound: true };
-  }
+    if (!Number.isInteger(noticeId)) {
+        return { notFound: true };
+    }
 
-  return {
-    props: {
-      notice: JSON.parse(JSON.stringify(notice)),
-    },
-  };
+    const notice = await prisma.notice.findUnique({
+        where: { id: noticeId },
+    });
+
+    if (!notice) {
+        return { notFound: true };
+    }
+
+    return {
+        props: {
+            initialData: JSON.parse(JSON.stringify(notice)),
+            noticeId: params.id,
+            initialTheme: getThemeFromRequest(req),
+        },
+    };
 }
 
-export default function EditNoticePage({ notice }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <Link href="/" className="text-slate-500 hover:text-slate-700 transition-colors">
-            ← Back
-          </Link>
-          <h1 className="text-xl font-extrabold text-slate-900">Edit Notice</h1>
-        </div>
-      </header>
+/** @param {import('next').InferGetServerSidePropsType<typeof getServerSideProps> } props */
+export default function EditNoticePage({ initialData, noticeId, initialTheme }) {
+    const { theme, toggleTheme } = useNoticeTheme(initialTheme);
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-          <NoticeForm initialData={notice} noticeId={notice.id} />
-        </div>
-      </main>
-    </div>
-  );
+    return (
+        <NoticeForm
+            initialData={initialData}
+            noticeId={noticeId}
+            theme={theme}
+            toggleTheme={toggleTheme}
+        />
+    );
 }
