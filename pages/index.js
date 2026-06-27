@@ -7,7 +7,6 @@ import {
     FaPlus,
     FaSearch,
     FaInbox,
-    FaClipboardList,
     FaExclamationTriangle,
 } from "react-icons/fa";
 import NoticeCard from "../components/NoticeCard";
@@ -104,7 +103,12 @@ export default function Home({
                 <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-                            <FaClipboardList />
+                            <img
+                                src="/logo.svg"
+                                alt=""
+                                aria-hidden="true"
+                                className="h-9 w-9 rounded-lg"
+                            />
                             <span>Notice Board</span>
                         </h1>
                         <p

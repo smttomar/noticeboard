@@ -29,6 +29,12 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
             <div className="w-full max-w-md rounded-2xl bg-slate-900 p-8 shadow-xl">
+                <img
+                    src="/logo.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="mb-4 h-12 w-12 rounded-xl"
+                />
                 <h1 className="text-2xl font-bold text-white mb-6">
                     Admin Login
                 </h1>
