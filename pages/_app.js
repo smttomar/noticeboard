@@ -1,12 +1,16 @@
 import Head from "next/head";
 import "../styles/globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+const defaultSiteUrl = "https://noticeboard-puce.vercel.app";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || defaultSiteUrl).replace(
+    /\/$/,
+    ""
+);
 const appTitle = "Notice Board";
 const appDescription =
     "Create, manage, search, and browse important notices from a simple shared board.";
 const ogImagePath = "/og-image.png";
-const ogImageUrl = siteUrl ? `${siteUrl}${ogImagePath}` : ogImagePath;
+const ogImageUrl = `${siteUrl}${ogImagePath}`;
 
 export default function App({ Component, pageProps }) {
     return (
@@ -26,8 +30,9 @@ export default function App({ Component, pageProps }) {
                 <meta property="og:site_name" content={appTitle} />
                 <meta property="og:title" content={appTitle} />
                 <meta property="og:description" content={appDescription} />
-                {siteUrl && <meta property="og:url" content={siteUrl} />}
+                <meta property="og:url" content={siteUrl} />
                 <meta property="og:image" content={ogImageUrl} />
+                <meta property="og:image:secure_url" content={ogImageUrl} />
                 <meta property="og:image:width" content="1200" />
                 <meta property="og:image:height" content="630" />
                 <meta property="og:image:type" content="image/png" />
@@ -37,7 +42,7 @@ export default function App({ Component, pageProps }) {
                 <meta name="twitter:description" content={appDescription} />
                 <meta name="twitter:image" content={ogImageUrl} />
                 <meta name="twitter:image:alt" content="Notice Board app preview" />
-                {siteUrl && <link rel="canonical" href={siteUrl} />}
+                <link rel="canonical" href={siteUrl} />
                 <link rel="icon" type="image/svg+xml" href="/logo.svg" />
                 <link rel="shortcut icon" href="/logo.svg" />
             </Head>

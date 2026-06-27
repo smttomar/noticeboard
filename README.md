@@ -94,8 +94,12 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Push the repository to GitHub (make it **public**).
 2. Import the repo on [vercel.com](https://vercel.com).
-3. Add the environment variable `DATABASE_URL` in the Vercel project settings.
+3. Add the environment variables in the Vercel project settings:
+   - `DATABASE_URL`
+   - `NEXT_PUBLIC_SITE_URL=https://noticeboard-puce.vercel.app`
 4. Deploy. Vercel automatically runs `prisma generate` via the `postinstall` script.
+
+`NEXT_PUBLIC_SITE_URL` is used for absolute Open Graph and Twitter image URLs.
 
 > **Note:** Do not use a local SQLite file — Vercel's filesystem is ephemeral. Always use a hosted database.
 
