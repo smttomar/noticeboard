@@ -52,6 +52,41 @@ export default function LoginPage() {
                     Admin Login
                 </h1>
 
+                <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 p-2">
+                    <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M13 16h-1v-4h-1m1-4h.01M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"
+                                />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <h3 className="text-sm font-semibold text-amber-300">
+                                Administrator Access
+                            </h3>
+
+                            <p className="mt-1 text-sm leading-6 text-slate-300">
+                                This portal is restricted to authorized
+                                administrators only. Login credentials are
+                                provided by the system administrator. If you do
+                                not have valid credentials, please contact your
+                                administrator for access.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input
                         type="email"
