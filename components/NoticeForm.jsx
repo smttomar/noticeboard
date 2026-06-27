@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { FaMoon, FaSun } from "react-icons/fa";
+import { FaMoon, FaSpinner, FaSun } from "react-icons/fa";
 
 export default function NoticeForm({
     initialData,
@@ -30,6 +30,8 @@ export default function NoticeForm({
 
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [navigatingHome, setNavigatingHome] = useState(false);
+    const isBusy = submitting || navigatingHome;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -122,13 +124,25 @@ export default function NoticeForm({
                 return;
             }
 
-            router.push("/");
+            await router.push("/");
         } catch {
             setErrors({
                 _global: "Network error. Please try again.",
             });
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleBackToBoard = async () => {
+        if (isBusy) return;
+
+        setNavigatingHome(true);
+
+        try {
+            await router.push("/");
+        } finally {
+            setNavigatingHome(false);
         }
     };
 
@@ -163,12 +177,16 @@ export default function NoticeForm({
                 <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
                     <button
                         type="button"
-                        onClick={() => router.push("/")}
-                        className={`text-sm font-semibold ${
+                        onClick={handleBackToBoard}
+                        disabled={isBusy}
+                        className={`inline-flex items-center gap-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
                             isDark ? "text-slate-100" : "text-slate-700"
                         }`}
                     >
-                        ← Back to Board
+                        {navigatingHome && (
+                            <FaSpinner className="animate-spin" />
+                        )}
+                        {navigatingHome ? "Returning..." : "← Back to Board"}
                     </button>
 
                     {toggleTheme && (
@@ -366,9 +384,12 @@ export default function NoticeForm({
                         <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                             <button
                                 type="submit"
-                                disabled={submitting}
-                                className="flex-1 rounded-xl bg-indigo-600 px-8 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                                disabled={isBusy}
+                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
+                                {submitting && (
+                                    <FaSpinner className="animate-spin" />
+                                )}
                                 {submitting
                                     ? "Saving..."
                                     : isEditing
@@ -378,15 +399,18 @@ export default function NoticeForm({
 
                             <button
                                 type="button"
-                                onClick={() => router.push("/")}
-                                disabled={submitting}
-                                className={`rounded-xl border px-6 py-2.5 font-medium transition-colors disabled:opacity-60 ${
+                                onClick={handleBackToBoard}
+                                disabled={isBusy}
+                                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-6 py-2.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                                     isDark
                                         ? "border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800"
                                         : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                                 }`}
                             >
-                                Cancel
+                                {navigatingHome && (
+                                    <FaSpinner className="animate-spin" />
+                                )}
+                                {navigatingHome ? "Returning..." : "Cancel"}
                             </button>
                         </div>
                     </form>

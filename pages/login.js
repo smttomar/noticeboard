@@ -1,29 +1,42 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { FaSpinner } from "react-icons/fa";
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-        });
+        if (loading) return;
 
-        const data = await res.json();
+        setLoading(true);
+        setError("");
 
-        if (!res.ok) {
-            setError(data.error || "Login failed");
-            return;
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || "Login failed");
+                return;
+            }
+
+            await router.push("/");
+        } catch {
+            setError("Network error. Please try again.");
+        } finally {
+            setLoading(false);
         }
-
-        router.push("/");
     };
 
     return (
@@ -45,6 +58,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Email"
+                        disabled={loading}
                         className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white"
                     />
                     <input
@@ -52,6 +66,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Password"
+                        disabled={loading}
                         className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white"
                     />
 
@@ -59,9 +74,11 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white"
+                        disabled={loading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Login
+                        {loading && <FaSpinner className="animate-spin" />}
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
             </div>

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import {
     FaMoon,
     FaSun,
     FaPlus,
     FaSearch,
     FaInbox,
+    FaSpinner,
     FaExclamationTriangle,
 } from "react-icons/fa";
 import NoticeCard from "../components/NoticeCard";
@@ -45,6 +45,9 @@ export default function Home({
     const [notices, setNotices] = useState(initialNotices);
     const [search, setSearch] = useState("");
     const [isAdmin, setIsAdmin] = useState(initialIsAdmin);
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [logoutLoading, setLogoutLoading] = useState(false);
+    const [newNoticeLoading, setNewNoticeLoading] = useState(false);
     const { theme, toggleTheme } = useNoticeTheme(initialTheme);
 
     useEffect(() => {
@@ -55,10 +58,42 @@ export default function Home({
         setNotices((prev) => prev.filter((n) => n.id !== id));
     };
 
+    const handleAdminLogin = async () => {
+        if (loginLoading) return;
+
+        setLoginLoading(true);
+
+        try {
+            await router.push("/login");
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+
+    const handleNewNotice = async () => {
+        if (newNoticeLoading || logoutLoading) return;
+
+        setNewNoticeLoading(true);
+
+        try {
+            await router.push("/notices/new");
+        } finally {
+            setNewNoticeLoading(false);
+        }
+    };
+
     const handleLogout = async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
-        setIsAdmin(false);
-        router.push("/");
+        if (logoutLoading || newNoticeLoading) return;
+
+        setLogoutLoading(true);
+
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            setIsAdmin(false);
+            await router.push("/");
+        } finally {
+            setLogoutLoading(false);
+        }
     };
 
     const urgentCount = useMemo(
@@ -180,33 +215,49 @@ export default function Home({
 
                         {isAdmin ? (
                             <>
-                                <Link
-                                    href="/notices/new"
-                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+                                <button
+                                    type="button"
+                                    onClick={handleNewNotice}
+                                    disabled={newNoticeLoading || logoutLoading}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <FaPlus />
-                                    New Notice
-                                </Link>
+                                    {newNoticeLoading ? (
+                                        <FaSpinner className="animate-spin" />
+                                    ) : (
+                                        <FaPlus />
+                                    )}
+                                    {newNoticeLoading
+                                        ? "Opening..."
+                                        : "New Notice"}
+                                </button>
 
                                 <button
                                     type="button"
                                     onClick={handleLogout}
-                                    className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                                    disabled={logoutLoading || newNoticeLoading}
+                                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                         isDark
                                             ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
                                             : "bg-slate-100 text-slate-800 hover:bg-slate-200"
                                     }`}
                                 >
-                                    Logout
+                                    {logoutLoading && (
+                                        <FaSpinner className="animate-spin" />
+                                    )}
+                                    {logoutLoading ? "Logging out..." : "Logout"}
                                 </button>
                             </>
                         ) : (
                             <button
                                 type="button"
-                                onClick={() => router.push("/login")}
-                                className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+                                onClick={handleAdminLogin}
+                                disabled={loginLoading}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Admin Login
+                                {loginLoading && (
+                                    <FaSpinner className="animate-spin" />
+                                )}
+                                {loginLoading ? "Opening..." : "Admin Login"}
                             </button>
                         )}
                     </div>
@@ -234,12 +285,19 @@ export default function Home({
                             Get started by creating your first notice.
                         </p>
                         {isAdmin && (
-                            <Link
-                                href="/notices/new"
-                                className="mt-6 inline-block rounded-xl bg-indigo-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-indigo-700"
+                            <button
+                                type="button"
+                                onClick={handleNewNotice}
+                                disabled={newNoticeLoading || logoutLoading}
+                                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Create Notice
-                            </Link>
+                                {newNoticeLoading && (
+                                    <FaSpinner className="animate-spin" />
+                                )}
+                                {newNoticeLoading
+                                    ? "Opening..."
+                                    : "Create Notice"}
+                            </button>
                         )}
                     </div>
                 ) : !hasSearchResults ? (

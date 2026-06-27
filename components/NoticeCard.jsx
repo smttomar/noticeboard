@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import {
     FaEdit,
+    FaSpinner,
     FaTrash,
     FaTimes,
     FaExclamationTriangle,
@@ -31,6 +32,7 @@ export default function NoticeCard({
     const router = useRouter();
     const [showConfirm, setShowConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [editing, setEditing] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
@@ -61,6 +63,8 @@ export default function NoticeCard({
     }, []);
 
     const handleDelete = async () => {
+        if (deleting) return;
+
         setDeleting(true);
 
         try {
@@ -79,6 +83,20 @@ export default function NoticeCard({
             alert("Unable to delete this notice. Please try again.");
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleEdit = async (e) => {
+        e.stopPropagation();
+
+        if (editing || deleting) return;
+
+        setEditing(true);
+
+        try {
+            await router.push(`/notices/${notice.id}/edit`);
+        } finally {
+            setEditing(false);
         }
     };
 
@@ -222,16 +240,16 @@ export default function NoticeCard({
                                 <>
                                     <button
                                         type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            router.push(
-                                                `/notices/${notice.id}/edit`,
-                                            );
-                                        }}
-                                        className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${actionButton}`}
+                                        onClick={handleEdit}
+                                        disabled={editing || deleting}
+                                        className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${actionButton}`}
                                     >
-                                        <FaEdit className="inline mr-1" />
-                                        Edit
+                                        {editing ? (
+                                            <FaSpinner className="animate-spin" />
+                                        ) : (
+                                            <FaEdit />
+                                        )}
+                                        {editing ? "Opening..." : "Edit"}
                                     </button>
 
                                     <button
@@ -240,9 +258,10 @@ export default function NoticeCard({
                                             e.stopPropagation();
                                             setShowConfirm(true);
                                         }}
-                                        className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white ${actionDanger}`}
+                                        disabled={editing}
+                                        className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 ${actionDanger}`}
                                     >
-                                        <FaTrash className="inline mr-1" />
+                                        <FaTrash />
                                         Delete
                                     </button>
                                 </>
@@ -267,9 +286,12 @@ export default function NoticeCard({
                                             handleDelete();
                                         }}
                                         disabled={deleting}
-                                        className={`rounded-md px-2.5 py-1 text-xs font-bold text-white ${actionDanger} disabled:opacity-50`}
+                                        className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold text-white ${actionDanger} disabled:cursor-not-allowed disabled:opacity-50`}
                                     >
-                                        {deleting ? "..." : "Yes"}
+                                        {deleting && (
+                                            <FaSpinner className="animate-spin" />
+                                        )}
+                                        {deleting ? "Deleting..." : "Yes"}
                                     </button>
 
                                     <button
